@@ -25,5 +25,8 @@ namespace Project.Core.Models.Dto.Programs
 
         [JsonProperty(PropertyName = "TotalTime")]
         public DateTime TotalTime { get; set; }
+
+        [JsonProperty(PropertyName = "Date")]
+        public DateTime Date { get; set; }
     }
 }

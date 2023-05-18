@@ -15,6 +15,7 @@ namespace Project.Core.Entities
         public DateTime TimeStart { get; set; }
         public DateTime TimeEnd { get; set; }
         public DateTime TotalTime { get; set; }
+        public DateTime Date { get; set; }
 
     }
 }
