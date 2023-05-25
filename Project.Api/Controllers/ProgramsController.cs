@@ -1,4 +1,5 @@
 using AutoMapper;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -8,11 +9,14 @@ using Project.Core.Entities;
 using Project.Core.Helpers;
 using Project.Core.Models.Dto;
 using Project.Core.Models.Dto.Programs;
+using Project.Core.Models.Dto.User;
 using Project.Core.Models.Request;
 using Project.Core.Models.Response;
 using Project.Core.OperationInterfaces;
+using Project.Core.ServiceInterfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 
@@ -21,54 +25,70 @@ namespace Project.Api.Controllers
     [Produces("application/json")]
     [Route("api/v{v:apiVersion}/programs")]
     [ApiController, ApiVersion("1")]
-    [Authorize]
 
-        public class ProgramsController : ControllerBase
+    public class ProgramsController : ControllerBase
+    {
+        private readonly IMapper _mapper;
+        private readonly IProgramsService _programsService;
+        private readonly ILogger _logger;
+
+        public ProgramsController(IMapper mapper, IProgramsService programsService, ILogger<ProgramsController> logger)
         {
-            [HttpPost("getProgramResults")]
-            public IActionResult GetProgramResults([FromBody] DtoGetProgramUseRequest request)
-            {
-                // Получение данных из request.UserId и request.Date
-                string userId = request.UserId;
-                DateTime date = request.Date;
-
-                // Логика выборки результатов программы для выбранной даты
-                List<DtoGetProgramResponse> programResults = GetProgramResultsForDate(userId, date);
-
-                // Возвращение результата
-                return Ok(programResults);
-            }
-
-            private List<DtoGetProgramResponse> GetProgramResultsForDate(string userId, DateTime date)
-            {
-                // Логика выборки результатов программы для выбранной даты
-                // ...
-
-                // Пример создания списка результатов
-                List<DtoGetProgramResponse> programResults = new List<DtoGetProgramResponse>();
-
-               /* // Добавление примера результата программы в список
-                DtoGetProgramResponse programResult = new DtoGetProgramResponse
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = Guid.Parse(userId),
-                    ProgramName = "Example Program",
-                    TimeStart = date.AddHours(9),
-                    TimeEnd = date.AddHours(10),
-                    TotalTime = TimeSpan.FromHours(1)
-                };
-
-                programResults.Add(programResult);
-
-                // ... */
-
-                return programResults;
-            }
-
-
-
-
-
-
+            _mapper = mapper;
+            _programsService = programsService;
+            _logger = logger;
         }
+
+
+
+        [HttpPost("get-all")]
+        public async Task<ResultRequest<List<DtoGetProgramResponse>>> GetPrograms([FromBody] GetProgramsRequest request)
+        {
+            try
+            {
+                var programs = await _programsService.GetAllAsync<Programs>();
+
+                // Фильтрация программ по UserID и полю Date
+                programs = programs.Where(p => p.UserId == request.UserId && p.Date.Date == request.Date.Date).ToList();
+
+                return ResultRequest<List<DtoGetProgramResponse>>.Ok(_mapper.Map<List<DtoGetProgramResponse>>(programs));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError("Get all programs error", e.ToString());
+                return ResultRequest<List<DtoGetProgramResponse>>.Error("Get all programs error", e.Message);
+            }
+        }
+
+        [HttpPost("add")]
+        public async Task<ResultRequest<DtoGetProgramResponse>> Add([FromBody] InboundRequest<DtoGetProgramResponse> request)
+        {
+            using (var transaction = _programsService.BeginTransaction())
+            {
+                try
+                {
+                    var dto = request?.Data;
+                    if (dto == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return ResultRequest<DtoGetProgramResponse>.Error("Adding element failed", "Invalid request data");
+                    }
+
+                    var field = _mapper.Map<Programs>(dto);
+
+                    var addedField = _programsService.Add(field);
+                    var mappedField = _mapper.Map<DtoGetProgramResponse>(addedField);
+                    await transaction.CommitAsync();
+                    return ResultRequest<DtoGetProgramResponse>.Ok(mappedField);
+                }
+                catch (Exception e)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError("Update element User error", e.ToString());
+                    return ResultRequest<DtoGetProgramResponse>.Error("Adding element error", e.Message);
+                }
+            }
+        }
+
+    }
 }

@@ -8,25 +8,12 @@ namespace Project.Core.Models.Dto.Programs
 {
     public class DtoGetProgramResponse
     {
-        [JsonProperty(PropertyName = "id")]
         public Guid Id { get; set; }
-
-        [JsonProperty(PropertyName = "UserId")]
         public Guid UserId { get; set; }
-
-        [JsonProperty(PropertyName = "ProgramName")]
         public string ProgramName { get; set; }
-
-        [JsonProperty(PropertyName = "TimeStart")]
-        public DateTime TimeStart { get; set; }
-
-        [JsonProperty(PropertyName = "TimeEnd")]
-        public DateTime TimeEnd { get; set; }
-
-        [JsonProperty(PropertyName = "TotalTime")]
-        public DateTime TotalTime { get; set; }
-
-        [JsonProperty(PropertyName = "Date")]
+        public TimeSpan TimeStart { get; set; }
+        public TimeSpan? TimeEnd { get; set; }
+        public TimeSpan? TotalTime { get; set; }
         public DateTime Date { get; set; }
     }
 }

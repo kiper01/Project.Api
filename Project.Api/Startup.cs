@@ -139,6 +139,9 @@ namespace Project.Api
             services.AddScoped<IUserService>(provider =>
                 new UserService(provider.GetService<IUnitOfWork>()));
 
+            services.AddScoped<IProgramsService>(
+               provider => new ProgramsService(provider.GetService<IUnitOfWork>(), Configuration)
+           );
 
             services.AddScoped<IItemService>(provider =>
                new ItemService(provider.GetService<IUnitOfWork>(), Configuration));

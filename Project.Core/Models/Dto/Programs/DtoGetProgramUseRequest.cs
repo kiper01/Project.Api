@@ -6,12 +6,9 @@ using System.Text;
 
 namespace Project.Core.Models.Dto.Programs
 {
-    public class DtoGetProgramUseRequest
+    public class GetProgramsRequest
     {
-        [JsonProperty(PropertyName = "UserId")]
-        public string UserId { get; set; }
-
-        [JsonProperty(PropertyName = "Date")]
+        public Guid UserId { get; set; }
         public DateTime Date { get; set; }
     }
 }
